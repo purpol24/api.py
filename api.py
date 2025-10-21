@@ -26,7 +26,7 @@ class AbsDiffLayer(tf.keras.layers.Layer):
         return config
 
 # Get the base directory for models
-MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
+MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 
 # Load the trained model and tokenizer
 model = tf.keras.models.load_model(
@@ -226,4 +226,4 @@ def match_mentors():
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
