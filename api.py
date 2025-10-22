@@ -147,10 +147,11 @@ def match_mentors():
 
         # Connect to the MySQL database
         db_connection = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="gabaykareradb"
+            host=os.environ.get("MYSQLHOST", "localhost"),
+            user=os.environ.get("MYSQLUSER", "root"),
+            password=os.environ.get("MYSQLPASSWORD", ""),
+            database=os.environ.get("MYSQLDATABASE", "gabaykareradb"),
+            port=int(os.environ.get("MYSQLPORT", 3306))
         )
 
         cursor = db_connection.cursor(dictionary=True)
