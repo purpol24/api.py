@@ -164,6 +164,21 @@ def match_mentors():
         results = []
         for mentor in mentors:
             mentor_id = mentor['id']
+            
+            # Check if mentor is fully booked (has 2 or more mentees with pending/ongoing status)
+            cursor.execute("""
+                SELECT COUNT(DISTINCT mentee_id) as active_mentee_count 
+                FROM sessions 
+                WHERE mentor_id = %s 
+                AND status IN ('pending', 'ongoing')
+            """, (mentor_id,))
+            booking_status = cursor.fetchone()
+            active_mentee_count = booking_status['active_mentee_count'] if booking_status else 0
+            
+            # Skip mentor if they already have 2 or more active mentees
+            if active_mentee_count >= 2:
+                continue
+            
             cursor.execute("SELECT skill_name FROM mentor_skills_tb WHERE mentor_id = %s", (mentor_id,))
             skills = cursor.fetchall()
 
