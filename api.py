@@ -131,7 +131,11 @@ def match_mentors():
         mentee_skills = [skill.strip().lower() for skill in data.get('skills', [])]
 
         if not mentee_skills:
-            return jsonify({"error": "No skills provided"}), 400  
+            return jsonify({"error": "No skills provided"}), 400
+
+        # Get pagination parameters
+        limit = int(data.get('limit', 3))  # Default to 3 results per page
+        offset = int(data.get('offset', 0))  # Default to start from beginning  
 
         # Expand synonyms for better matches
         expanded_skills = expand_synonyms(mentee_skills)
@@ -219,14 +223,23 @@ def match_mentors():
         # Sort results by similarity score (highest to lowest)
         results.sort(key=lambda x: x['score'], reverse=True)
 
-        # Return the top 3 results
-        top_3_results = results[:3]
+        # Apply pagination: return results based on offset and limit
+        paginated_results = results[offset:offset + limit]
+        
+        # Return results with metadata about whether there are more results
+        response_data = {
+            "results": paginated_results,
+            "has_more": len(results) > offset + limit,
+            "total": len(results),
+            "offset": offset,
+            "limit": limit
+        }
 
         # Close database connection
         cursor.close()
         db_connection.close()
 
-        return jsonify(top_3_results)
+        return jsonify(response_data)
 
     except Exception as e:
         # Log the exception for better debugging
