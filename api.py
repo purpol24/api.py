@@ -26,7 +26,7 @@ class AbsDiffLayer(tf.keras.layers.Layer):
         return config
 
 # Get the base directory for models
-MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
+MODELS_DIR = os.path.join(os.path.dirname(__file__), "models")
 
 # Load the trained model and tokenizer
 model = tf.keras.models.load_model(
@@ -147,10 +147,11 @@ def match_mentors():
 
         # Connect to the MySQL database
         db_connection = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="gabaykareradb"
+            host=os.environ.get("MYSQLHOST", "localhost"),
+            user=os.environ.get("MYSQLUSER", "root"),
+            password=os.environ.get("MYSQLPASSWORD", ""),
+            database=os.environ.get("MYSQLDATABASE", "gabaykareradb"),
+            port=int(os.environ.get("MYSQLPORT", 3306))
         )
 
         cursor = db_connection.cursor(dictionary=True)
@@ -163,21 +164,6 @@ def match_mentors():
         results = []
         for mentor in mentors:
             mentor_id = mentor['id']
-            
-            # Check if mentor is fully booked (has 2 or more mentees with pending/ongoing status)
-            cursor.execute("""
-                SELECT COUNT(DISTINCT mentee_id) as active_mentee_count 
-                FROM sessions 
-                WHERE mentor_id = %s 
-                AND status IN ('pending', 'ongoing')
-            """, (mentor_id,))
-            booking_status = cursor.fetchone()
-            active_mentee_count = booking_status['active_mentee_count'] if booking_status else 0
-            
-            # Skip mentor if they already have 2 or more active mentees
-            if active_mentee_count >= 2:
-                continue
-            
             cursor.execute("SELECT skill_name FROM mentor_skills_tb WHERE mentor_id = %s", (mentor_id,))
             skills = cursor.fetchall()
 
@@ -241,4 +227,4 @@ def match_mentors():
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
