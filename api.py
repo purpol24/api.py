@@ -159,7 +159,7 @@ def match_mentors():
         )
 
         cursor = db_connection.cursor(dictionary=True)
-        cursor.execute("SELECT id, first_name, last_name, availability, profile_picture FROM user_tb WHERE role_id = 2")
+        cursor.execute("SELECT id, first_name, last_name, availability, profile_picture, job_title FROM user_tb WHERE role_id = 2")
         mentors = cursor.fetchall()
 
         if not mentors:
@@ -210,8 +210,9 @@ def match_mentors():
             # Only add mentors with valid matches or suggestions
             if exact_matches or suggestions:
                 results.append({
-                    "id": mentor['id'],  # Add this line
+                    "id": mentor['id'],
                     "name": f"{mentor['first_name']} {mentor['last_name']}",
+                    "job_title": mentor.get('job_title'),  # Include job_title from database
                     "score": score,
                     "skills": mentor_skills,
                     "availability": mentor['availability'],
