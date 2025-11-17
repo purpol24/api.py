@@ -159,7 +159,12 @@ def match_mentors():
         )
 
         cursor = db_connection.cursor(dictionary=True)
-        cursor.execute("SELECT id, first_name, last_name, availability, profile_picture, job_title FROM user_tb WHERE role_id = 2")
+        cursor.execute("""
+            SELECT id, first_name, last_name, availability, profile_picture, job_title, COALESCE(is_restricted, 0) as is_restricted
+            FROM user_tb
+            WHERE role_id = 2
+            AND COALESCE(is_restricted, 0) = 0
+        """)
         mentors = cursor.fetchall()
 
         if not mentors:
