@@ -128,6 +128,8 @@ def match_mentors():
             return jsonify({"error": "No data provided"}), 400
 
         mentee_id = data.get('mentee_id')
+        if mentee_id is None:
+            return jsonify({"error": "Mentee ID is required"}), 400
         mentee_skills = [skill.strip().lower() for skill in data.get('skills', [])]
 
         if not mentee_skills:
@@ -159,6 +161,15 @@ def match_mentors():
         )
 
         cursor = db_connection.cursor(dictionary=True)
+
+        # Fetch mentors who already have an expired session with this mentee
+        cursor.execute("""
+            SELECT DISTINCT mentor_id
+            FROM sessions
+            WHERE mentee_id = %s
+            AND status = 'expired'
+        """, (mentee_id,))
+        expired_mentor_ids = {row['mentor_id'] for row in cursor.fetchall()}
         cursor.execute("""
             SELECT id, first_name, last_name, availability, profile_picture, job_title, COALESCE(is_restricted, 0) as is_restricted
             FROM user_tb
@@ -173,6 +184,10 @@ def match_mentors():
         results = []
         for mentor in mentors:
             mentor_id = mentor['id']
+
+            # Skip mentors with an expired session with this mentee
+            if mentor_id in expired_mentor_ids:
+                continue
             
             # Check if mentor is fully booked (has 2 or more mentees with pending/ongoing status)
             cursor.execute("""
